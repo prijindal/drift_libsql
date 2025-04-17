@@ -15,7 +15,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     int? syncIntervalSeconds,
     String? encryptionKey,
     bool? readYourWrites,
-    List<String>? extensions,
+    Map<String, String?>? extensions,
   }) : this._(_LibsqlDelegate(LibsqlClient(
           url,
           authToken: authToken,
@@ -24,13 +24,13 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
           encryptionKey: encryptionKey,
           readYourWrites: readYourWrites,
         ),
-       extensions ?? const [],
+       extensions ?? const {},
       ));
 }
 
 final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
-  final List<String> _extensions;
+  final Map<String, String?> _extensions;
 
   bool _open = false;
 
@@ -66,8 +66,15 @@ final class _LibsqlDelegate extends DatabaseDelegate {
     await _client.connect();
     await _client.enableExtension();
 
-    for (String path in _extensions) {
-      await _client.loadExtension(path: path);
+    for (final entry in _extensions.entries) {
+      final path = entry.key;
+      final entryPoint = entry.value;
+
+      if (entryPoint != null && entryPoint.isNotEmpty) {
+        await _client.loadExtension(path: path, entryPoint: entryPoint);
+      } else {
+        await _client.loadExtension(path: path);
+      }
     }
 
     _open = true;
