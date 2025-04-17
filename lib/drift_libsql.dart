@@ -15,7 +15,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     int? syncIntervalSeconds,
     String? encryptionKey,
     bool? readYourWrites,
-    Map<String, String?>? extensions,
+    List<ExtensionDescriptor>? extensions,
   }) : this._(_LibsqlDelegate(LibsqlClient(
           url,
           authToken: authToken,
@@ -24,13 +24,13 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
           encryptionKey: encryptionKey,
           readYourWrites: readYourWrites,
         ),
-       extensions ?? const {},
+       extensions ?? const [],
       ));
 }
 
 final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
-  final Map<String, String?> _extensions;
+  final List<ExtensionDescriptor> _extensions;
 
   bool _open = false;
 
@@ -66,14 +66,16 @@ final class _LibsqlDelegate extends DatabaseDelegate {
     await _client.connect();
     await _client.enableExtension();
 
-    for (final entry in _extensions.entries) {
-      final path = entry.key;
-      final entryPoint = entry.value;
-
-      if (entryPoint != null && entryPoint.isNotEmpty) {
-        await _client.loadExtension(path: path, entryPoint: entryPoint);
+    for (final ext in _extensions) {
+      if (ext.entryPoint != null) {
+        await _client.loadExtension(
+          path: ext.path,
+          entryPoint: ext.entryPoint,
+        );
       } else {
-        await _client.loadExtension(path: path);
+        await _client.loadExtension(
+          path: ext.path,
+        );
       }
     }
 
@@ -103,4 +105,14 @@ final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
   Future<void> setSchemaVersion(int version) async {
     await delegate._client.execute('pragma user_version = $version;');
   }
+}
+
+final class ExtensionDescriptor {
+  final String path;
+  final String? entryPoint;
+
+  const ExtensionDescriptor({
+    required this.path,
+    this.entryPoint,
+  });
 }
