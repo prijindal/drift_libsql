@@ -6,9 +6,11 @@ import 'package:drift/backends.dart';
 import 'package:libsql_dart/libsql_dart.dart';
 
 final class DriftLibsqlDatabase extends DelegatedDatabase {
-  DriftLibsqlDatabase._(super.delegate);
+  final LibsqlClient client;
 
-  DriftLibsqlDatabase(
+  DriftLibsqlDatabase._(_LibsqlDelegate delegate, this.client) : super(delegate);
+
+  factory DriftLibsqlDatabase(
     String url, {
     String? authToken,
     String? syncUrl,
@@ -17,17 +19,19 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     bool? readYourWrites,
     bool? offline,
     List<ExtensionDescriptor>? extensions,
-  }) : this._(_LibsqlDelegate(LibsqlClient(
-          url,
-          authToken: authToken,
-          syncUrl: syncUrl,
-          syncIntervalSeconds: syncIntervalSeconds,
-          encryptionKey: encryptionKey,
-          readYourWrites: readYourWrites,
-          offline: offline,
-        ),
-       extensions ?? const [],
-      ));
+  }) {
+    final client = LibsqlClient(
+      url,
+      authToken: authToken,
+      syncUrl: syncUrl,
+      syncIntervalSeconds: syncIntervalSeconds,
+      encryptionKey: encryptionKey,
+      readYourWrites: readYourWrites,
+      offline: offline,
+    );
+    final delegate = _LibsqlDelegate(client, extensions ?? const []);
+    return DriftLibsqlDatabase._(delegate, client);
+  }
 }
 
 final class _LibsqlDelegate extends DatabaseDelegate {
@@ -88,8 +92,7 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   TransactionDelegate get transactionDelegate => const NoTransactionDelegate();
 
   @override
-  DbVersionDelegate get versionDelegate =>
-      _LibsqlVersionDelegate(delegate: this);
+  DbVersionDelegate get versionDelegate => _LibsqlVersionDelegate(delegate: this);
 }
 
 final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
