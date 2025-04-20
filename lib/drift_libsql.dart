@@ -15,6 +15,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     int? syncIntervalSeconds,
     String? encryptionKey,
     bool? readYourWrites,
+    bool? offline,
     List<ExtensionDescriptor>? extensions,
   }) : this._(_LibsqlDelegate(LibsqlClient(
           url,
@@ -23,6 +24,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
           syncIntervalSeconds: syncIntervalSeconds,
           encryptionKey: encryptionKey,
           readYourWrites: readYourWrites,
+          offline: offline,
         ),
        extensions ?? const [],
       ));
