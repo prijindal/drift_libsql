@@ -31,6 +31,15 @@ Future<void> main() async {
     syncIntervalSeconds: 3,
   ));
 
+  offlineDatabase = AppDatabase(DriftLibsqlDatabase(
+    "${dir.path}/offline.db",
+    syncUrl: url,
+    authToken: token,
+    readYourWrites: true,
+    syncIntervalSeconds: 3,
+    offline: true,
+  ));
+
   runApp(const MyApp());
 }
 
@@ -106,6 +115,21 @@ class MyApp extends StatelessWidget {
                       );
                     },
                     child: const Text("Replica"),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => Provider<TaskRepository>(
+                            create: (context) =>
+                                LibsqlTaskRepository(offlineDatabase),
+                            child: const TaskList(),
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Offline"),
                   ),
                 ],
               ),
