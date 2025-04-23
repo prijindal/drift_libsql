@@ -18,6 +18,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     String? encryptionKey,
     bool? readYourWrites,
     bool? offline,
+    bool enableExtensions = false,
     List<ExtensionDescriptor>? extensions,
   }) {
     final client = LibsqlClient(
@@ -29,7 +30,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
       readYourWrites: readYourWrites,
       offline: offline,
     );
-    final delegate = _LibsqlDelegate(client, extensions ?? const []);
+    final delegate = _LibsqlDelegate(client, enableExtensions, extensions ?? const []);
     return DriftLibsqlDatabase._(delegate, client);
   }
 }
@@ -38,9 +39,11 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
 
+  bool _enableExtensions;
+  
   bool _open = false;
 
-  _LibsqlDelegate(this._client, this._extensions);
+  _LibsqlDelegate(this._client, this._enableExtensions, this._extensions);
 
   @override
   Future<void> runCustom(String statement, List<Object?> args) async {
@@ -70,21 +73,24 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   @override
   Future<void> open(QueryExecutorUser db) async {
     await _client.connect();
-    await _client.enableExtension();
 
-    for (final ext in _extensions) {
-      if (ext.entryPoint != null) {
-        await _client.loadExtension(
-          path: ext.path,
-          entryPoint: ext.entryPoint,
-        );
-      } else {
-        await _client.loadExtension(
-          path: ext.path,
-        );
+    if (_enableExtensions == true) {
+      await _client.enableExtension();
+    
+      for (final ext in _extensions) {
+        if (ext.entryPoint != null) {
+          await _client.loadExtension(
+            path: ext.path,
+            entryPoint: ext.entryPoint,
+          );
+        } else {
+          await _client.loadExtension(
+            path: ext.path,
+          );
+        }
       }
+      
     }
-
     _open = true;
   }
 
