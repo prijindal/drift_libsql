@@ -85,7 +85,7 @@ final class _LibsqlDelegate extends DatabaseDelegate {
           entryPoint: ext.entryPoint,
         );
       }
-      
+      await _client.disableExtension(); 
     }
     _open = true;
   }
