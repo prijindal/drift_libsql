@@ -35,8 +35,6 @@ final class LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
 
-  bool _enableExtensions;
-
   bool _open = false;
 
   LibsqlDelegate(this._client, this._enableExtensions, this._extensions);
@@ -70,7 +68,7 @@ final class LibsqlDelegate extends DatabaseDelegate {
   Future<void> open(QueryExecutorUser db) async {
     await _client.connect();
 
-    if (_enableExtensions == true) {
+    if (_extensions.isNotEmpty) {
       await _client.enableExtension();
 
       for (final ext in _extensions) {
