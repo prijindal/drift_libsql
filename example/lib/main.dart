@@ -14,6 +14,7 @@ late AppDatabase memoryDatabase;
 late AppDatabase localDatabase;
 late AppDatabase remoteDatabase;
 late AppDatabase replicaDatabase;
+late AppDatabase offlineDatabase;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

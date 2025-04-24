@@ -20,24 +20,36 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     bool? offline,
     bool enableExtensions = false,
     List<ExtensionDescriptor>? extensions,
-  }) : this._(LibsqlDelegate(LibsqlClient(
-      url,
-      authToken: authToken,
-      syncUrl: syncUrl,
-      syncIntervalSeconds: syncIntervalSeconds,
-      encryptionKey: encryptionKey,
-      readYourWrites: readYourWrites,
-      offline: offline,
-    )))
+  }) : this._(
+          _LibsqlDelegate(
+            LibsqlClient(
+              url,
+              authToken: authToken,
+              syncUrl: syncUrl,
+              syncIntervalSeconds: syncIntervalSeconds,
+              encryptionKey: encryptionKey,
+              readYourWrites: readYourWrites,
+              offline: offline,
+            ),
+            extensions: extensions,
+          ),
+        );
+
+  Future<void> sync() {
+    return (delegate as _LibsqlDelegate).sync();
+  }
 }
 
-final class LibsqlDelegate extends DatabaseDelegate {
+final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
 
   bool _open = false;
 
-  LibsqlDelegate(this._client, this._extensions);
+  _LibsqlDelegate(
+    this._client, {
+    List<ExtensionDescriptor>? extensions,
+  }) : _extensions = extensions ?? [];
 
   @override
   Future<void> runCustom(String statement, List<Object?> args) async {
@@ -77,8 +89,10 @@ final class LibsqlDelegate extends DatabaseDelegate {
           entryPoint: ext.entryPoint,
         );
       }
+
       await _client.disableExtension();
     }
+
     _open = true;
   }
 
@@ -86,17 +100,16 @@ final class LibsqlDelegate extends DatabaseDelegate {
     await _client.sync();
   }
 
-  String? get syncUrl => _client.syncUrl;
-
   @override
   TransactionDelegate get transactionDelegate => const NoTransactionDelegate();
 
   @override
-  DbVersionDelegate get versionDelegate => _LibsqlVersionDelegate(delegate: this);
+  DbVersionDelegate get versionDelegate =>
+      _LibsqlVersionDelegate(delegate: this);
 }
 
 final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
-  final LibsqlDelegate delegate;
+  final _LibsqlDelegate delegate;
 
   _LibsqlVersionDelegate({required this.delegate});
 
