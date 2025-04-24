@@ -39,6 +39,8 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
 
+  typedef ExtensionDescriptor = ({String path, String? entryPoint});
+  
   bool _enableExtensions;
   
   bool _open = false;
@@ -78,16 +80,10 @@ final class _LibsqlDelegate extends DatabaseDelegate {
       await _client.enableExtension();
     
       for (final ext in _extensions) {
-        if (ext.entryPoint != null) {
-          await _client.loadExtension(
-            path: ext.path,
-            entryPoint: ext.entryPoint,
-          );
-        } else {
-          await _client.loadExtension(
-            path: ext.path,
-          );
-        }
+        await _client.loadExtension(
+          path: ext.path,
+          entryPoint: ext.entryPoint,
+        );
       }
       
     }
@@ -116,14 +112,4 @@ final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
   Future<void> setSchemaVersion(int version) async {
     await delegate._client.execute('pragma user_version = $version;');
   }
-}
-
-final class ExtensionDescriptor {
-  final String path;
-  final String? entryPoint;
-
-  const ExtensionDescriptor({
-    required this.path,
-    this.entryPoint,
-  });
 }
