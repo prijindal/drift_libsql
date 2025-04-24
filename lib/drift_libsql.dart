@@ -37,7 +37,7 @@ final class LibsqlDelegate extends DatabaseDelegate {
 
   bool _open = false;
 
-  LibsqlDelegate(this._client, this._enableExtensions, this._extensions);
+  LibsqlDelegate(this._client, this._extensions);
 
   @override
   Future<void> runCustom(String statement, List<Object?> args) async {
