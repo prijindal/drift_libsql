@@ -8,11 +8,9 @@ import 'package:libsql_dart/libsql_dart.dart';
 typedef ExtensionDescriptor = ({String path, String? entryPoint});
 
 final class DriftLibsqlDatabase extends DelegatedDatabase {
-  final LibsqlClient client;
-  
-  DriftLibsqlDatabase._(_LibsqlDelegate delegate, this.client) : super(delegate);
+  DriftLibsqlDatabase._(super.delegate);
 
-  factory DriftLibsqlDatabase(
+  DriftLibsqlDatabase(
     String url, {
     String? authToken,
     String? syncUrl,
@@ -22,8 +20,7 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
     bool? offline,
     bool enableExtensions = false,
     List<ExtensionDescriptor>? extensions,
-  }) {
-    final client = LibsqlClient(
+  }) : this._(LibsqlDelegate(LibsqlClient(
       url,
       authToken: authToken,
       syncUrl: syncUrl,
@@ -31,21 +28,18 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
       encryptionKey: encryptionKey,
       readYourWrites: readYourWrites,
       offline: offline,
-    );
-    final delegate = _LibsqlDelegate(client, enableExtensions, extensions ?? const []);
-    return DriftLibsqlDatabase._(delegate, client);
-  }
+    )))
 }
 
-final class _LibsqlDelegate extends DatabaseDelegate {
+final class LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
-  
+
   bool _enableExtensions;
-  
+
   bool _open = false;
 
-  _LibsqlDelegate(this._client, this._enableExtensions, this._extensions);
+  LibsqlDelegate(this._client, this._enableExtensions, this._extensions);
 
   @override
   Future<void> runCustom(String statement, List<Object?> args) async {
@@ -78,7 +72,7 @@ final class _LibsqlDelegate extends DatabaseDelegate {
 
     if (_enableExtensions == true) {
       await _client.enableExtension();
-    
+
       for (final ext in _extensions) {
         await _client.loadExtension(
           path: ext.path,
@@ -90,6 +84,12 @@ final class _LibsqlDelegate extends DatabaseDelegate {
     _open = true;
   }
 
+  Future<void> sync() async {
+    await _client.sync();
+  }
+
+  String? get syncUrl => _client.syncUrl;
+
   @override
   TransactionDelegate get transactionDelegate => const NoTransactionDelegate();
 
@@ -98,7 +98,7 @@ final class _LibsqlDelegate extends DatabaseDelegate {
 }
 
 final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
-  final _LibsqlDelegate delegate;
+  final LibsqlDelegate delegate;
 
   _LibsqlVersionDelegate({required this.delegate});
 
