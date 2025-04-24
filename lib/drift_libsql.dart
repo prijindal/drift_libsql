@@ -5,11 +5,11 @@ import 'dart:async';
 import 'package:drift/backends.dart';
 import 'package:libsql_dart/libsql_dart.dart';
 
+typedef ExtensionDescriptor = ({String path, String? entryPoint});
+
 final class DriftLibsqlDatabase extends DelegatedDatabase {
   final LibsqlClient client;
   
-  typedef ExtensionDescriptor = ({String path, String? entryPoint});
-
   DriftLibsqlDatabase._(_LibsqlDelegate delegate, this.client) : super(delegate);
 
   factory DriftLibsqlDatabase(
@@ -85,7 +85,7 @@ final class _LibsqlDelegate extends DatabaseDelegate {
           entryPoint: ext.entryPoint,
         );
       }
-      await _client.disableExtension(); 
+      await _client.disableExtension();
     }
     _open = true;
   }
