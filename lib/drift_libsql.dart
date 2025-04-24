@@ -7,6 +7,8 @@ import 'package:libsql_dart/libsql_dart.dart';
 
 final class DriftLibsqlDatabase extends DelegatedDatabase {
   final LibsqlClient client;
+  
+  typedef ExtensionDescriptor = ({String path, String? entryPoint});
 
   DriftLibsqlDatabase._(_LibsqlDelegate delegate, this.client) : super(delegate);
 
@@ -38,8 +40,6 @@ final class DriftLibsqlDatabase extends DelegatedDatabase {
 final class _LibsqlDelegate extends DatabaseDelegate {
   final LibsqlClient _client;
   final List<ExtensionDescriptor> _extensions;
-
-  typedef ExtensionDescriptor = ({String path, String? entryPoint});
   
   bool _enableExtensions;
   
