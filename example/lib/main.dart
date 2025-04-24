@@ -35,8 +35,6 @@ Future<void> main() async {
     "${dir.path}/offline.db",
     syncUrl: url,
     authToken: token,
-    readYourWrites: true,
-    syncIntervalSeconds: 3,
     offline: true,
   ));
 
