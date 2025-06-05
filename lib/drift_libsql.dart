@@ -46,6 +46,8 @@ final class _LibsqlDelegate extends DatabaseDelegate {
 
   bool _open = false;
 
+  late DynamicVersionDelegate _versionDelegate;
+
   _LibsqlDelegate(
     this._client, {
     List<ExtensionDescriptor>? extensions,
@@ -80,6 +82,8 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   Future<void> open(QueryExecutorUser db) async {
     await _client.connect();
 
+    _versionDelegate = await _VersionDelegateFactory.create(delegate: this);
+
     if (_extensions.isNotEmpty) {
       await _client.enableExtension();
 
@@ -104,14 +108,61 @@ final class _LibsqlDelegate extends DatabaseDelegate {
   TransactionDelegate get transactionDelegate => const NoTransactionDelegate();
 
   @override
-  DbVersionDelegate get versionDelegate =>
-      _LibsqlVersionDelegate(delegate: this);
+  DbVersionDelegate get versionDelegate => _versionDelegate;
 }
 
-final class _LibsqlVersionDelegate extends DynamicVersionDelegate {
+final class _VersionDelegateFactory {
+  static Future<DynamicVersionDelegate> create(
+      {required _LibsqlDelegate delegate}) async {
+    final versionDelegate = _PragmaVersionDelegate(delegate: delegate);
+    final completer = Completer<DynamicVersionDelegate>();
+    versionDelegate.schemaVersion
+        .then((_) => completer.complete(versionDelegate))
+        .catchError((_) async {
+      final tableVersionDelegate = _TableVersionDelegate(delegate: delegate);
+      await tableVersionDelegate.init();
+      completer.complete(tableVersionDelegate);
+    });
+    return completer.future;
+  }
+}
+
+final class _TableVersionDelegate extends DynamicVersionDelegate {
   final _LibsqlDelegate delegate;
 
-  _LibsqlVersionDelegate({required this.delegate});
+  _TableVersionDelegate({required this.delegate});
+
+  Future<void> init({initial = 0}) async {
+    await delegate.runCustom(
+        'CREATE TABLE IF NOT EXISTS __drift_user_version (user_version INTEGER) STRICT;',
+        []);
+    final count = await delegate
+        .runSelect('SELECT COUNT(*) FROM __drift_user_version;', []);
+    if (count.rows.first.first == 0) {
+      await delegate.runInsert(
+          'INSERT INTO __drift_user_version (user_version) VALUES ($initial);',
+          []);
+    }
+  }
+
+  @override
+  Future<int> get schemaVersion async {
+    final result = await delegate._client
+        .query('SELECT user_version FROM __drift_user_version;');
+    return result.first['user_version'] as int;
+  }
+
+  @override
+  Future<void> setSchemaVersion(int version) async {
+    await delegate._client
+        .execute('UPDATE __drift_user_version SET user_version = $version;');
+  }
+}
+
+final class _PragmaVersionDelegate extends DynamicVersionDelegate {
+  final _LibsqlDelegate delegate;
+
+  _PragmaVersionDelegate({required this.delegate});
 
   @override
   Future<int> get schemaVersion async {
