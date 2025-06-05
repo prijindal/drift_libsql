@@ -14,6 +14,7 @@ late AppDatabase memoryDatabase;
 late AppDatabase localDatabase;
 late AppDatabase remoteDatabase;
 late AppDatabase replicaDatabase;
+late AppDatabase offlineDatabase;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,13 @@ Future<void> main() async {
     authToken: token,
     readYourWrites: true,
     syncIntervalSeconds: 3,
+  ));
+
+  offlineDatabase = AppDatabase(DriftLibsqlDatabase(
+    "${dir.path}/offline.db",
+    syncUrl: url,
+    authToken: token,
+    offline: true,
   ));
 
   runApp(const MyApp());
@@ -106,6 +114,21 @@ class MyApp extends StatelessWidget {
                       );
                     },
                     child: const Text("Replica"),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => Provider<TaskRepository>(
+                            create: (context) =>
+                                LibsqlTaskRepository(offlineDatabase),
+                            child: const TaskList(),
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Offline"),
                   ),
                 ],
               ),
