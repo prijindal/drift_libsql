@@ -291,51 +291,69 @@ typedef $$TaskTableTableUpdateCompanionBuilder = TaskTableCompanion Function({
 });
 
 class $$TaskTableTableFilterComposer
-    extends FilterComposer<_$AppDatabase, $TaskTableTable> {
-  $$TaskTableTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+    extends Composer<_$AppDatabase, $TaskTableTable> {
+  $$TaskTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get title => $state.composableBuilder(
-      column: $state.table.title,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get completed => $state.composableBuilder(
-      column: $state.table.completed,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
+  ColumnFilters<bool> get completed => $composableBuilder(
+      column: $table.completed, builder: (column) => ColumnFilters(column));
 }
 
 class $$TaskTableTableOrderingComposer
-    extends OrderingComposer<_$AppDatabase, $TaskTableTable> {
-  $$TaskTableTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+    extends Composer<_$AppDatabase, $TaskTableTable> {
+  $$TaskTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get title => $state.composableBuilder(
-      column: $state.table.title,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get description => $state.composableBuilder(
-      column: $state.table.description,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get completed => $state.composableBuilder(
-      column: $state.table.completed,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
+  ColumnOrderings<bool> get completed => $composableBuilder(
+      column: $table.completed, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TaskTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TaskTableTable> {
+  $$TaskTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumn<bool> get completed =>
+      $composableBuilder(column: $table.completed, builder: (column) => column);
 }
 
 class $$TaskTableTableTableManager extends RootTableManager<
@@ -344,6 +362,7 @@ class $$TaskTableTableTableManager extends RootTableManager<
     TaskTableData,
     $$TaskTableTableFilterComposer,
     $$TaskTableTableOrderingComposer,
+    $$TaskTableTableAnnotationComposer,
     $$TaskTableTableCreateCompanionBuilder,
     $$TaskTableTableUpdateCompanionBuilder,
     (
@@ -356,10 +375,12 @@ class $$TaskTableTableTableManager extends RootTableManager<
       : super(TableManagerState(
           db: db,
           table: table,
-          filteringComposer:
-              $$TaskTableTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$TaskTableTableOrderingComposer(ComposerState(db, table)),
+          createFilteringComposer: () =>
+              $$TaskTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TaskTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TaskTableTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> title = const Value.absent(),
@@ -397,6 +418,7 @@ typedef $$TaskTableTableProcessedTableManager = ProcessedTableManager<
     TaskTableData,
     $$TaskTableTableFilterComposer,
     $$TaskTableTableOrderingComposer,
+    $$TaskTableTableAnnotationComposer,
     $$TaskTableTableCreateCompanionBuilder,
     $$TaskTableTableUpdateCompanionBuilder,
     (
